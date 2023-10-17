@@ -1,17 +1,13 @@
-FROM golang:latest
 
-RUN mkdir -p /go/src/helloworld-api
+FROM golang:1.21.3 as build
+WORKDIR /src
+COPY go.mod .
+RUN go mod download
 
-WORKDIR /go/src/helloworld-api
+COPY *.go .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/helloworld-api 
 
-COPY . /go/src/helloworld-api
-
-# Build the Go application
-RUN go build -o helloworld-api
-
-# Set execute permissions on the binary
-RUN chmod +x helloworld-api
-
-CMD ["./helloworld-api"]
-
-EXPOSE 80
+FROM alpine:3.13
+COPY --from=build /bin/helloworld-api /bin/helloworld-api
+EXPOSE 8080
+CMD ["/bin/helloworld-api"]
